@@ -1,0 +1,72 @@
+name: CI/CD - Iris Classification Service
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.9
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r api/requirements.txt
+          pip install -r model/requirements.txt
+
+      - name: Lint with flake8
+        run: |
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+      - name: Test with pytest
+        run: |
+          pytest api/test_api.py
+
+      - name: Build the Docker image
+        run: docker-compose build
+
+      - name: Test the Docker image (optional)
+        run: |
+          docker-compose up -d
+          sleep 10 # Дать время контейнерам запуститься
+          # Добавьте здесь тесты для проверки работоспособности API в контейнере
+          # Например, отправьте запрос к /docs и проверьте ответ
+          docker-compose down
+
+      - name: Log in to Docker Hub (optional)
+        if: ${{ secrets.DOCKERHUB_USERNAME && secrets.DOCKERHUB_TOKEN }}
+        run: docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Push the Docker image to Docker Hub (optional)
+        if: ${{ secrets.DOCKERHUB_USERNAME && secrets.DOCKERHUB_TOKEN }}
+        run: |
+          IMAGE_ID=$(docker-compose config --property services.fastapi.image)
+          IMAGE_ID=$(echo "$IMAGE_ID" | tr -d '"') #удалить двойные кавычки
+          IMAGE_TAG=latest
+          docker tag $IMAGE_ID ${{ secrets.DOCKERHUB_USERNAME }}/iris-classification-fastapi:$IMAGE_TAG
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/iris-classification-fastapi:$IMAGE_TAG
+
+      - name: Deploy to server (optional)
+        if: ${{ secrets.SSH_PRIVATE_KEY && secrets.HOST && secrets.USERNAME }}
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            docker stop iris-classification-fastapi || true
+            docker rm iris-classification-fastapi || true
+            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/iris-classification-fastapi:latest
+            docker run -d -p 8000:8000 --name iris-classification-fastapi ${{ secrets.DOCKERHUB_USERNAME }}/iris-classification-fastapi:latest

@@ -1,0 +1,35 @@
+version: "3.8"
+
+services:
+  mlflow:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    volumes:
+      - mlflow_artifacts:/app/mlruns
+    environment:
+      MLFLOW_ARTIFACT_ROOT: /app/mlruns
+    networks:
+      - app_net
+
+  fastapi:
+    build:
+      context: app
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    depends_on:
+      - mlflow
+    environment:
+      MLFLOW_TRACKING_URI: http://mlflow:5000
+    networks:
+      - app_net
+
+volumes:
+  mlflow_artifacts:
+
+networks:
+  app_net:
+    driver: bridge

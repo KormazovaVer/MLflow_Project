@@ -1,0 +1,27 @@
+# Python
+*.pyc
+*.pyo
+__pycache__/
+.pytest_cache/
+venv/
+.env
+*.log
+
+# Data
+data/raw/  # Если данные скачиваются, но не хранятся в репо
+data/processed/ # Если это временные файлы
+model/  # Если обученные модели должны создаваться на CI
+
+# Docker
+.dockerignore
+
+# IDE related
+.idea/
+.vscode/
+
+# OS related
+.DS_Store
+
+# mlflow
+mlruns/
+mlartifacts/
