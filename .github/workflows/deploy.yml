@@ -43,11 +43,7 @@ jobs:
           docker-compose down
 
       - name: Log in to Docker Hub (optional)
-        if: ${{ secrets.DOCKERHUB_USERNAME != '' && secrets.DOCKERHUB_TOKEN != '' }}
-        run: docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Push the Docker image to Docker Hub (optional)
-        if: ${{ secrets.DOCKERHUB_USERNAME != '' && secrets.DOCKERHUB_TOKEN != '' }}
+        if: ${{ !empty(secrets.DOCKERHUB_USERNAME) && !empty(secrets.DOCKERHUB_TOKEN) }}
         run: |
           IMAGE_ID=$(docker-compose config --property services.fastapi.image)
           IMAGE_ID=$(echo "$IMAGE_ID" | tr -d '"') #удалить двойные кавычки
