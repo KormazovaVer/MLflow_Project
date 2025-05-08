@@ -34,6 +34,6 @@ jobs:
             --platform linux/amd64 \
             --cache-from type=local,src=/tmp/.docker-buildkit \
             --cache-to type=local,dest=/tmp/.docker-buildkit,mode=max \
-            -t yourusername/your-app:${IMAGE_TAG} .
+            -t kormazova/new_project_ml:tagname .
 
 
