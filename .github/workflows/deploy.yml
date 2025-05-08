@@ -8,7 +8,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -40,17 +39,15 @@ jobs:
       - name: Test the Docker image (optional)
         run: |
           docker-compose up -d
-          sleep 10 # Дать время контейнерам запуститься
-          # Добавьте здесь тесты для проверки работоспособности API в контейнере
-          # Например, отправьте запрос к /docs и проверьте ответ
+          sleep 10
           docker-compose down
 
       - name: Log in to Docker Hub (optional)
-        if: ${{ secrets.DOCKERHUB_USERNAME && secrets.DOCKERHUB_TOKEN }}
+        if: ${{ secrets.DOCKERHUB_USERNAME != '' && secrets.DOCKERHUB_TOKEN != '' }}
         run: docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Push the Docker image to Docker Hub (optional)
-        if: ${{ secrets.DOCKERHUB_USERNAME && secrets.DOCKERHUB_TOKEN }}
+        if: ${{ secrets.DOCKERHUB_USERNAME != '' && secrets.DOCKERHUB_TOKEN != '' }}
         run: |
           IMAGE_ID=$(docker-compose config --property services.fastapi.image)
           IMAGE_ID=$(echo "$IMAGE_ID" | tr -d '"') #удалить двойные кавычки
@@ -59,7 +56,7 @@ jobs:
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/iris-classification-fastapi:$IMAGE_TAG
 
       - name: Deploy to server (optional)
-        if: ${{ secrets.SSH_PRIVATE_KEY && secrets.HOST && secrets.USERNAME }}
+        if: ${{ secrets.SSH_PRIVATE_KEY != '' && secrets.HOST != '' && secrets.USERNAME != '' }}
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.HOST }}
